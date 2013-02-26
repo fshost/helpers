@@ -1,4 +1,4 @@
 ### helpers
-helper functions for node.js
+helper functions for Node.js
 ####installation
 npm install helpers

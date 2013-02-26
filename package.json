@@ -1,0 +1,1 @@
+{"name":"helpers","description":"helper functions for node.js","version":"0.0.1","author":"Mashdraggin","license":"MIT","repository":{"type":"git","url":"https://github.com/fshost/helpers.git"},"scripts":{"test":"node ./test/test"},"readme":"### helpers\nhelper functions for node.js\n####installation\nnpm install helpers","readmeFilename":"README.md"}

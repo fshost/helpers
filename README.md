@@ -1,57 +1,55 @@
 ### node-helpers
 
-some simple functions for Node.js to help in normalizing requiring modules across platforms and when run from external scripts such as testing frameworks or npm.
+Some simple methods to require and export Node.js modules from a 'lib' subdirectory.
 
 #### why
 
-Running "npm test" does not resolve '.' correctly on my windows x64 pc and I got tired of copying and pasting the boilerplate in this little module just to be able to require my submodules easily.  This module is only (possibly) relevant if you care whether your tests run properly on Windows or not and want to save some minor repetitive effort. 
+Using '.' when requiring relative paths does not always work correctly when running a node.js script from a cwd other than the one the original script is in, e.g. if running
+    npm test
+in the project root, require statements with '.' in the paths will fail in Windows.  This being the case, I wrote my code to require modules something like
+
+    var path = require('path');
+    var lib1 = require(path.join(__dirname, 'lib', 'lib1');
+
+As I began to use a standard structure for Node.js projects that had the main entrypoint consisting only of lines of code to require and exporting library modules, where the real code resides, e.g. suppose you have a directory structure like
+
+    index.js
+    /lib
+        - lib1.js
+        - lib2.js
+        - lib3.js
+
+
+my index.js file began to always look something like
+
+    var path = require('path');
+    exports.lib1 = require(path.join(__dirname, 'lib', 'lib1');
+    exports.lib2 = require(path.join(__dirname, 'lib', 'lib2');
+    exports.lib3 = require(path.join(__dirname, 'lib', 'lib3');
+    // etc. ad nauseum
+    
+In my continuing effort to speed up coding I wrote this little module so that my index.js files now look like
+
+    var h = require('helpers')(__dirname, exports);
+    h.exp('lib1');
+    h.exp('lib2');
+    h.exp('lib3');
+    
+Its faster for me to type, quicker for me to scan, and works (even on Windows).  There are two other usage methods as well - **sub** and **mixin**, which can be used as follows
+
+    // to simply require a module in relative 'lib' subdir
+    var lib1 = h.sub('lib1');
+
+    // to add every exported member of a submodule in lib to the current script's export object
+    h.mixin('lib1');
+
+The above, or various combinations thereof, gives me enough flexibility to very quickly write my index.js entry-point for a Node.js code library in every scenario I've run into so far.
+
+**tl;dr** - it saves typing and just works
 
 #### installation
 
 npm install helpers
-
-#### usage
-
-var h = require('helpers')(__dirname, exports);
-
-#### methods
-
-suppose you have a directory structure like
-<pre>/lib
-  - index.js
-  - myLib1.js
-  - myLib2.js
-</pre>
-
-then the following examples could be taken from index.js:
-
-##### sub
-require a module by name relative to the current module's directory
-<pre>
-var myLib1 = h.sub('myLib1');
-// myLib1 = whatever myLib1.js is exporting
-</pre>
-
-##### exp
-export a module by name relative to the current module's directory
-<pre>
-h.exp('myLib1');
-// exports.myLib1 = whatever myLib1.js is exporting
-</pre>
-
-
-##### mixin
-export the properties of a module within the current module
-<pre>
-h.mixin('myLib1');
-// basically the same as if you cut and paste myLib1.js into the current module
-</pre>
-
-If the above is not clear take a look at the test.js file.  It is short and easy to understand.
-
-####tests
-To run the tests you will need to have mocha installed, then just cd into the dir node-helpers is installed and type:
-<pre>mocha</pre>
 
 #### license: MIT
 see LICENSE.txt for more info

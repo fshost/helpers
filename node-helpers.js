@@ -1,47 +1,121 @@
-﻿/// <reference path="../nodelib/node.js" />
-var path = require('path');
+﻿var path = require('path');
+var defaultLibDir = 'lib';
 
-module.exports = function (filepath, _exports) {
-    /// <summary>Helper functions for requiring Node.js modules.</summary>
-    /// <param name="filepath" type="String">The filepath of the current module.</param>
-    /// <param name="_exports" type="Object">The _exports property of the current module.</param>
-    /// <returns type="Object">Helper-methods object.</returns>
+/**
+ * Helper functions for requiring Node.js modules.
+ * @param {String} dirname directory of the calling script.
+ * @param Object _exports exports object of the calling script.
+ * @param {String} [libDir] relative path to a library subdir.
+ * @returns {Object} Helper-methods object.
+ */
+module.exports = function(dirname, _exports, libDir) {
 
-    var dirname = filepath || process.cwd();
+    libDir = libDir || defaultLibDir;
 
-    function submodule(name) {
-        /// <summary>Require a local Node.js module file.</summary>
-        /// <param name="name" type="String">The filename of the module.</param>
-        /// <returns type="Object">The Node.js module.</returns>
-        return require(path.resolve(dirname + path.sep + name));
+    function getRelativePath() {
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(dirname);
+        return path.join.apply(path, args);
+    }
+    /**
+     * Require a local Node.js module file relative to dirname
+     * @returns {Object} The module.
+     */
+    function requireSubModule() {
+        var subpath = getRelativePath.apply(null, arguments);
+        return require(subpath);
     }
 
-    function exp(name) {
-        /// <summary>Export a local module file as a property.</summary>
-        /// <param name="name" type="String">The filename of the module.</param>
-        _exports[name] = submodule(name);
+    /*
+     * Require a relative path module and export it as a property.
+     */
+    function exportSubModule() {
+        var args = Array.prototype.slice.call(arguments);
+        var name = camelCase(args.join('-').replace(/\.| /));
+        _exports[name] = requireSubModule.apply(null, args);
     }
 
-    function mixin(name, excludeNs) {
-        /// <summary>Mixin a local module file's methods with root namespace.</summary>
-        /// <param name="name" type="String">The filename of the module.</param>
-        /// <param name="excludeNs" type="Boolean" optional="true">Whether to export module as a namespace also (default is true).</param>
-        var sub = submodule(name);
-        for (var key in sub) {
-            if (sub.hasOwnProperty(key)) {
-                _exports[key] = sub[key];
-            }
-        }
-        if (!excludeNs) {
-            // include methods in namespaced module
-            exp(name);
-        }
+    /**
+     * adds a relative module's properties to a module's exports
+     */
+    function imports() {
+        var args = Array.prototype.slice.call(arguments);
+        var subModule = requireSubModule.apply(null, args);
+        _exports = extend(_exports, subModule);
+        return _exports;
     }
+
+    /*
+     * Export a local module file from 'lib' subdir as a property.
+     */
+    function exportLibSubModule() {
+        var args = Array.prototype.slice.call(arguments);
+        var name = args.length ? camelCase(args.join('-')
+            .replace(/\.| /)) : 'lib';
+        args.unshift(dirname, libDir);
+        var subpath = path.join.apply(path, args);
+        _exports[name] = require(subpath);
+    }
+
+    /**
+     * adds a relative module's properties to a module's exports
+     */
+    function importsFromLib() {
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(libDir);
+        var subModule = requireSubModule.apply(null, args);
+        _exports = extend(_exports, subModule);
+        return _exports;
+    }
+
 
     return {
-        sub: submodule,
-        exp: exp,
-        mixin: mixin
+        relpath: getRelativePath,
+
+        libpath: getRelativePath.bind(null, libDir),
+
+        require: requireSubModule,
+
+        exports: exportSubModule,
+
+        imports: imports,
+        lib: {
+            require: requireSubModule.bind(null, libDir),
+            exports: exportLibSubModule,
+            // exports: exportSubModule.bind({ fromLib: true }),
+            imports: importsFromLib
+        }
+
+        // ,
+        // importsLib: mixin.bind(null, 'lib')
     };
 
 };
+
+
+/**
+ * Convert string with dashes to camelCase string
+ * @param str {String} A string that may contain dashes
+ * @returns {String} A camelCase string
+ */
+function camelCase(str) {
+    var result = str.replace(/-([a-z])/ig, function(word, letter) {
+        return letter.toUpperCase();
+    });
+    return result;
+}
+
+/**
+ * Extends target object with source object
+ * @param target {Object} target object to extend
+ * @param target {Object} source object
+ * @returns {Object} extended target object
+ */
+function extend(target, source) {
+    for (var key in source) {
+        if (source.hasOwnProperty(key)) {
+            target[key] = source[key];
+        }
+    }
+    return target;
+}

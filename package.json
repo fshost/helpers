@@ -1,8 +1,8 @@
 {
     "name": "helpers",
     "description": "helper functions for Node.js",
-    "version": "0.0.1",
-    "author": "Mashdraggin",
+    "version": "0.0.3",
+    "author": "Nathan Cartwright",
     "license": "MIT",
 	"main": "node-helpers",
     "repository": {
@@ -13,8 +13,8 @@
         "test": "mocha"
     },
 	"devDependencies": {
-	  "should": "*",
-	  "mocha": "*"
+        "should": "*",
+        "mocha": "*"
 	},
     "readme": "### helpers\nhelper functions for Node.js\n####installation\nnpm install helpers",
     "readmeFilename": "README.md"

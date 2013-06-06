@@ -1,57 +1,79 @@
 ### node-helpers
 
-some simple functions for Node.js to help in normalizing requiring modules across platforms and when run from external scripts such as testing frameworks or npm.
+Node.js methods to help in getting paths relative to current script and in requiring relative modules
 
 #### why
 
-Running "npm test" does not resolve '.' correctly on my windows x64 pc and I got tired of copying and pasting the boilerplate in this little module just to be able to require my submodules easily.  This module is only (possibly) relevant if you care whether your tests run properly on Windows or not and want to save some minor repetitive effort. 
+When using relative paths that use '.' the paths are sometimes not resolved correctly if the current working directory is not the same as the script that requires the relative path.  The solution is to use __dirname.  This is not really an issue when requiring modules, as require is very robust in Node.js, however functionality for requiring relative paths and from a 'lib' subdir are included to help reduce boilerplate code and generally speed up development time for my projects.  This is mostly seen when working with many and/or deeply nested paths in a module.  For just a few require statements this module isn't really helpful as it will not save that much in terms of repetitive coding.  However, to keep the examples succint, they are of course contrived and as such may not be very illustrative of if and when the usefulness of this module becomes more apparent.
 
 #### installation
 
-npm install helpers
+    npm install helpers
 
 #### usage
 
-var h = require('helpers')(__dirname, exports);
-
-#### methods
-
 suppose you have a directory structure like
-<pre>/lib
+<pre>
+/lib
   - index.js
-  - myLib1.js
-  - myLib2.js
+  - foo.js
+  - bar.js
 </pre>
 
-then the following examples could be taken from index.js:
+and assuming this module is required like so
 
-##### sub
-require a module by name relative to the current module's directory
-<pre>
-var myLib1 = h.sub('myLib1');
-// myLib1 = whatever myLib1.js is exporting
-</pre>
+    var h = require('helpers')(__dirname, exports);
 
-##### exp
+then the following method examples would apply
+
+##### require
+require relative modules
+
+    var lib = h.require('lib'),
+        foo = h.require('lib/foo'),
+        bar = h.require('lib/bar');
+
+
+##### exports
 export a module by name relative to the current module's directory
-<pre>
-h.exp('myLib1');
-// exports.myLib1 = whatever myLib1.js is exporting
-</pre>
+
+normally the code for this might be something like
+
+    exports.lib = require(__dirname + '/lib');
+    exports.libFoo = require(__dirname + '/lib/foo');
+    exports.libBar = require(__dirname + '/lib/bar');
+    // etc ad nauseum...
+
+using the helpers exports method reduces this to
+
+    h.exports('lib')
+    h.exports('lib/lib1')
+    h.exports('lib/lib2')
+
+The above examples are equivalent.  Dash, slash, space, and '.' separated file-names will be converted to camelCase, e.g.
+
+    h.exports('foo/bar/buz')
+
+will result in the buz module being exported as a property with identifier 'fooBarBuz' from the current module
 
 
-##### mixin
-export the properties of a module within the current module
-<pre>
-h.mixin('myLib1');
-// basically the same as if you cut and paste myLib1.js into the current module
-</pre>
+##### imports
+extends the properties of a module's exports object with the exported properties of a module at a relative path to the current script
 
-If the above is not clear take a look at the test.js file.  It is short and easy to understand.
+    h.imports('lib')
+
+if the **lib** module had two exported properties 'foo' & 'bar', the current module will now be exporting those properties in addition to any existing and later exports, if any.
 
 ####tests
-To run the tests you will need to have mocha installed, then just cd into the dir node-helpers is installed and type:
-<pre>mocha</pre>
+More detailed examples can be seen in the test/test.js file.  If you wish to actually run the tests, cd into the dir node-helpers is installed in.  If you do not already have mocha, chai, and should.js installed globally, you can install them by typing
+
+    npm install
+
+although for mocha, at least, it is recommended that it be installed globally, so you can simply type
+
+    mocha
+
+to run the tests.
 
 #### license: MIT
 see LICENSE.txt for more info

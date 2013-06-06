@@ -69,26 +69,20 @@ module.exports = function(dirname, _exports, libDir) {
     }
 
 
-    return {
+    var helpers = {
         relpath: getRelativePath,
-
         libpath: getRelativePath.bind(null, libDir),
-
         require: requireSubModule,
-
         exports: exportSubModule,
-
         imports: imports,
         lib: {
             require: requireSubModule.bind(null, libDir),
             exports: exportLibSubModule,
-            // exports: exportSubModule.bind({ fromLib: true }),
             imports: importsFromLib
         }
-
-        // ,
-        // importsLib: mixin.bind(null, 'lib')
     };
+
+    return helpers;
 
 };
 

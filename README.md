@@ -41,8 +41,8 @@ normally the code for this might be something like
 using the helpers exports method reduces this to
 
     h.exports('lib')
-    h.exports('lib/lib1')
-    h.exports('lib/lib2')
+    h.exports('lib/foo')
+    h.exports('lib/bar')
 
 The above examples are equivalent.  Dash, slash, space, and '.' separated file-names will be converted to camelCase, e.g.
 
